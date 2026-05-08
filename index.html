@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f4ee">
+    <title>Simulatore UPP</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Banca dati Addetti UPP</p>
+          <h1>Simulatore prove</h1>
+        </div>
+        <div class="status-pill" id="question-count">Caricamento</div>
+      </header>
+
+      <main>
+        <section class="view active" id="setup-view" aria-labelledby="setup-title">
+          <div class="panel">
+            <h2 id="setup-title">Configura prova</h2>
+            <div class="form-grid">
+              <label>
+                <span>Numero domande</span>
+                <input id="question-total" type="number" min="1" max="297" value="30" inputmode="numeric">
+              </label>
+              <label>
+                <span>Tempo in minuti</span>
+                <input id="exam-minutes" type="number" min="1" max="300" value="30" inputmode="numeric">
+              </label>
+            </div>
+            <div class="score-rules">
+              <span>Risposta efficace: 1</span>
+              <span>Mediamente efficace: 0.5</span>
+              <span>Non efficace o non data: 0</span>
+            </div>
+            <button class="primary-action" id="start-exam" type="button">Avvia prova</button>
+          </div>
+
+          <div class="panel history-panel">
+            <div class="section-head">
+              <h2>Storico</h2>
+              <button class="ghost-action" id="clear-history" type="button">Svuota</button>
+            </div>
+            <div class="history-list" id="history-list"></div>
+          </div>
+        </section>
+
+        <section class="view" id="exam-view" aria-live="polite">
+          <div class="exam-header">
+            <div>
+              <p class="eyebrow">Domanda <span id="current-number">1</span> di <span id="total-number">1</span></p>
+              <p class="source-ref">ID banca dati: <strong id="source-question-id">1</strong></p>
+              <div class="progress-track"><div id="progress-bar"></div></div>
+            </div>
+            <div class="timer" id="timer">00:00</div>
+          </div>
+
+          <article class="question-panel">
+            <p class="question-text" id="question-text"></p>
+            <div class="answer-list" id="answer-list"></div>
+          </article>
+
+          <div class="exam-actions">
+            <button class="secondary-action" id="prev-question" type="button">Indietro</button>
+            <button class="secondary-action" id="next-question" type="button">Avanti</button>
+          </div>
+          <button class="danger-action" id="finish-exam" type="button">Termina prova</button>
+        </section>
+
+        <section class="view" id="results-view">
+          <div class="result-summary">
+            <p class="eyebrow">Risultato</p>
+            <h2 id="score-title">0 punti</h2>
+            <div class="result-grid">
+              <div><span id="result-time">0:00</span><small>Tempo usato</small></div>
+              <div><span id="result-effective">0</span><small>Efficaci</small></div>
+              <div><span id="result-medium">0</span><small>Medie</small></div>
+              <div><span id="result-ineffective">0</span><small>Non efficaci</small></div>
+              <div><span id="result-empty">0</span><small>Non date</small></div>
+            </div>
+          </div>
+
+          <div class="review-toolbar">
+            <button class="primary-action" id="new-exam" type="button">Nuova prova</button>
+          </div>
+
+          <div class="review-list" id="review-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
