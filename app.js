@@ -163,6 +163,10 @@ function renderQuestion() {
   });
 }
 
+function scrollToExamTop() {
+  els.examView.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function tickTimer() {
   const exam = state.exam;
   const elapsed = Math.floor((Date.now() - exam.startedAt) / 1000);
@@ -310,10 +314,12 @@ function bindEvents() {
   els.prevQuestion.addEventListener("click", () => {
     state.exam.currentIndex -= 1;
     renderQuestion();
+    scrollToExamTop();
   });
   els.nextQuestion.addEventListener("click", () => {
     state.exam.currentIndex += 1;
     renderQuestion();
+    scrollToExamTop();
   });
   els.finishExam.addEventListener("click", finishExam);
   els.newExam.addEventListener("click", () => {
