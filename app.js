@@ -21,6 +21,8 @@ const els = {
   resultsView: document.querySelector("#results-view"),
   questionTotal: document.querySelector("#question-total"),
   examMinutes: document.querySelector("#exam-minutes"),
+  questionFrom: document.querySelector("#question-from"),
+  questionTo: document.querySelector("#question-to"),
   startExam: document.querySelector("#start-exam"),
   clearHistory: document.querySelector("#clear-history"),
   historyList: document.querySelector("#history-list"),
@@ -90,6 +92,42 @@ function saveSettings(settings) {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
+function getQuestionBounds() {
+  return {
+    min: state.questions[0]?.id || 1,
+    max: state.questions[state.questions.length - 1]?.id || 1,
+  };
+}
+
+function getSelectedRange() {
+  const bounds = getQuestionBounds();
+  const requestedFrom = Number.parseInt(els.questionFrom.value, 10);
+  const requestedTo = Number.parseInt(els.questionTo.value, 10);
+  const fromId = Math.min(Math.max(requestedFrom || bounds.min, bounds.min), bounds.max);
+  const toId = Math.min(Math.max(requestedTo || bounds.max, fromId), bounds.max);
+
+  return { fromId, toId };
+}
+
+function countQuestionsInRange(fromId, toId) {
+  return state.questions.filter((question) => question.id >= fromId && question.id <= toId).length;
+}
+
+function updateQuestionTotalLimit() {
+  if (!state.questions.length) {
+    return;
+  }
+
+  const { fromId, toId } = getSelectedRange();
+  const availableCount = countQuestionsInRange(fromId, toId);
+  const requestedQuestions = Number.parseInt(els.questionTotal.value, 10);
+
+  els.questionFrom.value = String(fromId);
+  els.questionTo.value = String(toId);
+  els.questionTotal.max = String(availableCount);
+  els.questionTotal.value = String(Math.min(Math.max(requestedQuestions || 1, 1), availableCount));
+}
+
 function renderHistory() {
   const history = getHistory();
   if (!history.length) {
@@ -116,8 +154,9 @@ function renderHistory() {
     .join("");
 }
 
-function createExam(questionCount, minutes) {
-  const selectedQuestions = shuffle(state.questions)
+function createExam(questionCount, minutes, fromId, toId) {
+  const availableQuestions = state.questions.filter((question) => question.id >= fromId && question.id <= toId);
+  const selectedQuestions = shuffle(availableQuestions)
     .slice(0, questionCount)
     .map((question) => ({
       ...question,
@@ -277,14 +316,18 @@ function finishExam() {
 function startExam() {
   const requestedQuestions = Number.parseInt(els.questionTotal.value, 10);
   const requestedMinutes = Number.parseInt(els.examMinutes.value, 10);
-  const questionCount = Math.min(Math.max(requestedQuestions || 1, 1), state.questions.length);
+  const { fromId, toId } = getSelectedRange();
+  const availableCount = countQuestionsInRange(fromId, toId);
+  const questionCount = Math.min(Math.max(requestedQuestions || 1, 1), availableCount);
   const minutes = Math.min(Math.max(requestedMinutes || 1, 1), 300);
 
   els.questionTotal.value = String(questionCount);
   els.examMinutes.value = String(minutes);
-  saveSettings({ questionCount, minutes });
+  els.questionFrom.value = String(fromId);
+  els.questionTo.value = String(toId);
+  saveSettings({ questionCount, minutes, fromId, toId });
 
-  state.exam = createExam(questionCount, minutes);
+  state.exam = createExam(questionCount, minutes, fromId, toId);
   showView(els.examView);
   renderQuestion();
   startTimer();
@@ -297,8 +340,15 @@ async function loadQuestions() {
     throw new Error("Banca dati non caricata");
   }
   state.questions = await response.json();
+  const { min: minQuestionId, max: maxQuestionId } = getQuestionBounds();
   els.questionCount.textContent = `${state.questions.length} domande`;
   els.questionTotal.max = String(state.questions.length);
+  els.questionFrom.min = String(minQuestionId);
+  els.questionFrom.max = String(maxQuestionId);
+  els.questionFrom.value = String(minQuestionId);
+  els.questionTo.min = String(minQuestionId);
+  els.questionTo.max = String(maxQuestionId);
+  els.questionTo.value = String(maxQuestionId);
 
   const settings = getSettings();
   if (settings.questionCount) {
@@ -307,10 +357,19 @@ async function loadQuestions() {
   if (settings.minutes) {
     els.examMinutes.value = String(settings.minutes);
   }
+  if (settings.fromId) {
+    els.questionFrom.value = String(Math.min(Math.max(settings.fromId, minQuestionId), maxQuestionId));
+  }
+  if (settings.toId) {
+    els.questionTo.value = String(Math.min(Math.max(settings.toId, minQuestionId), maxQuestionId));
+  }
+  updateQuestionTotalLimit();
 }
 
 function bindEvents() {
   els.startExam.addEventListener("click", startExam);
+  els.questionFrom.addEventListener("change", updateQuestionTotalLimit);
+  els.questionTo.addEventListener("change", updateQuestionTotalLimit);
   els.prevQuestion.addEventListener("click", () => {
     state.exam.currentIndex -= 1;
     renderQuestion();
